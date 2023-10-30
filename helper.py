@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from IPython import display
 
+model_folder_path = "./model"
+
 plt.ion()
 
 def plot(scores, mean_scores):
