@@ -3,25 +3,33 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as f
 import os
+from helper import model_folder_path
 
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.linear2 = nn.Linear(hidden_size, output_size)
+        if os.path.exists(os.path.join(model_folder_path, "model.pth")):
+            model_state = torch.load(os.path.join(model_folder_path, "model.pth"))
+            self.load_state_dict(model_state['model'])
 
     def forward(self, x):
         x = f.relu(self.linear1(x))
         x = self.linear2(x)
         return x
     
-    def save(self, filename="model.pth"):
-        model_folder_path = "./model"
+    def save(self, n_games, filename="model.pth"):
         if not os.path.exists(model_folder_path):
             os.mkdir(model_folder_path)
 
+        model_state = {
+            'n_games': n_games,
+            'model': self.state_dict()
+        }
+
         filename = os.path.join(model_folder_path, filename)
-        torch.save(self.state_dict(), filename)
+        torch.save(model_state, filename)
 
 class QTrainer:
     def __init__(self, model, lr, gamma):
