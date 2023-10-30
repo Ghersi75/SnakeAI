@@ -5,6 +5,8 @@ from collections import deque
 from snake.snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 from model import Linear_QNet, QTrainer
 from helper import plot
+import os
+from helper import model_folder_path
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -15,6 +17,9 @@ LR = 1e-3
 class Agent:
     def __init__(self):
         self.n_games = 0
+        if os.path.exists(os.path.join(model_folder_path, "model.pth")):
+            model_state = torch.load(os.path.join(model_folder_path, "model.pth"))
+            self.n_games = model_state['n_games']
         # Randomness
         self.epsilon = 0 
         # Discount rate
@@ -158,7 +163,7 @@ def train():
             # If score > record, record = score
             if score > record:
                 record = score
-                agent.model.save()
+                agent.model.save(agent.n_games)
 
             print(f"Game: {agent.n_games}, Score: {score}, Record: {record}")
 
