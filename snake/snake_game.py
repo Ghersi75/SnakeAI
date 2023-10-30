@@ -38,7 +38,7 @@ BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
-SPEED = 20
+SPEED = 50
 
 class SnakeGameAI:
     def __init__(self, w=640, h=480):
@@ -145,7 +145,7 @@ class SnakeGameAI:
         
     def _move(self, action):
         # straight, right, left
-
+        # print(action)
         clockwise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clockwise.index(self.direction)
         # 1, 0, 0 go straight, no direction change
@@ -154,11 +154,14 @@ class SnakeGameAI:
         # 0, 1, 0 make a right turn, clockwise turn
         elif np.array_equal(action, [0, 1, 0]):
             next_idx = (idx + 1) % 4
-            new_dir = clockwise[idx]
+            new_dir = clockwise[next_idx]
         # 0, 0, 1 make a left turn, counter clockwise turn
-        elif np.array_equal(action, [0, 0, 1]):
+        # np.array_equal(action, [0, 0, 1])
+        else:
             next_idx = (idx - 1) % 4
-            new_dir = clockwise[idx]
+            new_dir = clockwise[next_idx]
+        
+        self.direction = new_dir
         x = self.head.x
         y = self.head.y
         if self.direction == Direction.RIGHT:
