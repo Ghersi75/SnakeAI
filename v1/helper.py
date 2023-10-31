@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from IPython import display
 import threading
-model_folder_path = "./model"
+model_folder_path = "./v1/model"
 
 plt.ion()
 
