@@ -4,9 +4,8 @@ import numpy as np
 from collections import deque
 from snake.snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 from model import Linear_QNet, QTrainer
-from helper import plot
+from helper import plot, model_folder_path, ShareResources
 import os
-from helper import model_folder_path
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -115,7 +114,7 @@ class Agent:
     def get_action(self, state):
         # random moves: tradeoff exploration vs exploitation
         # essentially, start as random, and move to predicted moves as the model improves
-        self.epsilon = 80 - self.n_games
+        self.epsilon = 50 - self.n_games
         next_move = [0, 0, 0]
         # As more games happen, epsilon decreases, and less random moves are done
         if random.randint(0, 200) < self.epsilon:
@@ -129,13 +128,12 @@ class Agent:
             next_move[move] = 1
 
         return next_move
-    
-def train():
+
+def train(agent):
     plot_scores = []
     plot_mean_scores = []
     total_score = 0
     record = 0
-    agent = Agent()
     game = SnakeGameAI()
     while True:
         # Get old/curr state
@@ -174,4 +172,8 @@ def train():
             plot(plot_scores, plot_mean_scores)
 
 if __name__ == "__main__":
-    train()
+    threads = 5
+    agent = Agent()
+    # ShareResources()
+
+    train(agent)
