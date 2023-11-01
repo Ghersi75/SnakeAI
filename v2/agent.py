@@ -10,70 +10,70 @@ import os
 # Agent class used to manage the game and AI
 class Agent:
     # TODO look at this one
-    def __init__(self, n_snakes=1):
-        self.n_games = 0
-        self.n_snakes = n_snakes
+    def __init__(self, nSnakes=1):
+        self.nGames = 0
+        self.nSnakes = nSnakes
         self.game = SnakeGameAI()
 
-    def get_state(self, i):
+    def getState(self, i):
         game = self.game
         head = game.getHead(i)
         # Get 9x9 grid around snake for model inputs
-        snake_vision_arr = []
+        snakeVisionArr = []
         for i in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
             for j in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
                 # If either of these is negative, is_collision will return true
-                check_x = head.x + BLOCK_SIZE * i
-                check_y = head.x + BLOCK_SIZE * j
-                check_point = Point(check_x, check_y)
-                if game.is_collision(i, check_point):
+                checkX = head.x + BLOCK_SIZE * i
+                checkY = head.x + BLOCK_SIZE * j
+                checkPoint = Point(checkX, checkY)
+                if game.isCollision(i, checkPoint):
                     # If the given point would cause a collision, meaning the wall or snake, append -1
-                    snake_vision_arr.append(-1)
-                elif game.foods[i] == check_point:
+                    snakeVisionArr.append(-1)
+                elif game.foods[i] == checkPoint:
                     # If the point given is where the food is append 1
-                    snake_vision_arr.append(1)
+                    snakeVisionArr.append(1)
                 else:
                     # If its not going to cause a collision or be food, append 0
-                    snake_vision_arr.append(0)
+                    snakeVisionArr.append(0)
 
         food = game.foods[i]
         direction = game.directions[i]
         # Get 4 points around the head
-        point_l = Point(head.x - BLOCK_SIZE, head.y)
-        point_r = Point(head.x + BLOCK_SIZE, head.y)
-        point_u = Point(head.x, head.y - BLOCK_SIZE)
-        point_d = Point(head.x, head.y + BLOCK_SIZE)
+        pointLeft = Point(head.x - BLOCK_SIZE, head.y)
+        pointRight = Point(head.x + BLOCK_SIZE, head.y)
+        pointUp = Point(head.x, head.y - BLOCK_SIZE)
+        pointDown = Point(head.x, head.y + BLOCK_SIZE)
 
         # Get which direction the head is going towards
-        dir_l = direction == Direction.LEFT
-        dir_r = direction == Direction.RIGHT
-        dir_u = direction == Direction.UP
-        dir_d = direction == Direction.DOWN
+        dirLeft = direction == Direction.LEFT
+        dirRight = direction == Direction.RIGHT
+        dirUp = direction == Direction.UP
+        dirDown = direction == Direction.DOWN
 
-        state = snake_vision_arr + [
+        state = snakeVisionArr + [
             # Danger straight ahead
-            (dir_r and game.is_collision(i, point_r)) or 
-            (dir_l and game.is_collision(i, point_l)) or 
-            (dir_u and game.is_collision(i, point_u)) or 
-            (dir_d and game.is_collision(i, point_d)),
+            (dirRight and game.isCollision(i, pointRight)) or 
+            (dirLeft and game.isCollision(i, pointLeft)) or 
+            (dirUp and game.isCollision(i, pointUp)) or 
+            (dirDown and game.isCollision(i, pointDown)),
 
             # Danger to the right
-            (dir_r and game.is_collision(i, point_d)) or 
-            (dir_l and game.is_collision(i, point_u)) or 
-            (dir_u and game.is_collision(i, point_r)) or 
-            (dir_d and game.is_collision(i, point_l)),
+            (dirRight and game.isCollision(i, pointDown)) or 
+            (dirLeft and game.isCollision(i, pointUp)) or 
+            (dirUp and game.isCollision(i, pointRight)) or 
+            (dirDown and game.isCollision(i, pointLeft)),
 
             # Danger to the left
-            (dir_r and game.is_collision(i, point_u)) or 
-            (dir_l and game.is_collision(i, point_d)) or 
-            (dir_u and game.is_collision(i, point_l)) or 
-            (dir_d and game.is_collision(i, point_r)),
+            (dirRight and game.isCollision(i, pointUp)) or 
+            (dirLeft and game.isCollision(i, pointDown)) or 
+            (dirUp and game.isCollision(i, pointLeft)) or 
+            (dirDown and game.isCollision(i, pointRight)),
 
             # Move directions
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
+            dirLeft,
+            dirRight,
+            dirUp,
+            dirDown,
 
             # Food direction
             food.x < head.x, # Food is left of us
@@ -86,8 +86,8 @@ class Agent:
 
     # No need for guessing or idx input
     # Evolution essentially just guesses over and over until it gets good at it, so no need to hardcode guessing
-    def get_action(self, state):
-        next_move = [0, 0, 0]
+    def getAction(self, state):
+        nextMove = [0, 0, 0]
 
         state0 = torch.tensor(state, dtype=torch.float)
         # This will automatically call the forward function
@@ -97,9 +97,9 @@ class Agent:
         # [1, 0, 0] will return 0
         # [99, 98, 100] will return 2
         move = torch.argmax(prediction).item()
-        next_move[move] = 1
+        nextMove[move] = 1
 
-        return next_move
+        return nextMove
 
     # TODO look at this one
 def train(agent):

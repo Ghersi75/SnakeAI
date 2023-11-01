@@ -81,7 +81,7 @@ class Snake:
         return self.gameOver
 
     def setGameOver(self, newGameOver):
-        self.game_over = newGameOver
+        self.gameOver = newGameOver
 
     def getModel(self):
         return self.model
@@ -96,19 +96,20 @@ class Snake:
         self.frameIterations = newIterations
 
 class SnakeGameAI:
-    def __init__(self, w=WIDTH, h=HEIGHT, n_snakes=1):
+    def __init__(self, w=WIDTH, h=HEIGHT, numSnakes=1):
         self.w = w
         self.h = h
-        self.n_snakes = n_snakes
+        self.numSnakes = numSnakes
         self.snakes = []
-        for i in range(n_snakes):
-            new_snake = Snake(Direction.RIGHT,  # Direction
+        for i in range(numSnakes):
+            newSnake = Snake(Direction.RIGHT,  # Direction
                               None,             # Head
                               None,             # Full snake, body and head
                               0,                # Score
                               None,             # Food
                               False,            # Game over, false by default
                               None)             # Neural network model, none by default
+        self.snakes.append(newSnake)
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
@@ -126,11 +127,11 @@ class SnakeGameAI:
 
     # init game state
     def reset(self, models):
-        if len(models) != self.n_snakes:
+        if len(models) != self.numSnakes:
             # Just in case I forget
             raise Exception("Number of models given does not match number of snakes")
         
-        for i in range(self.n_snakes):
+        for i in range(self.numSnakes):
             # Not sure if doing something like snake = self.snakes[i] would be reference, but it should be since its a class reference
             currSnake = self.snakes[i]
             currSnake.setDirection(Direction.RIGHT)
@@ -143,23 +144,23 @@ class SnakeGameAI:
                                 Point(currHead.x-(2*BLOCK_SIZE), currHead.y)])
             currSnake.setScore(0)
             currSnake.setFood(None)
-            self._place_food(i)
+            self._placeFood(i)
             currSnake.setModel(models[i])
             currSnake.setGameOver(False)
             currSnake.setFrameIterations(0)
         
-    def _place_food(self, i):
+    def _placeFood(self, i):
         currSnake = self.snakes[i]
         x = random.randint(0, (self.w-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
         y = random.randint(0, (self.h-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         food = Point(x, y)
         if food in currSnake.getSnake():
-            self._place_food(i)
+            self._placeFood(i)
         else:
             currSnake.setFood(food)
 
     # This function simply makes the next step with action as the direction it should be going in, and it returns the reward, whether the game is over, and the score
-    def play_step(self, action, i):
+    def playStep(self, action, i):
         currSnake = self.snakes[i]
         currSnake.setFrameIterations(currSnake.getFrameIterations() + 1)
         # 1. collect user input
@@ -177,7 +178,7 @@ class SnakeGameAI:
         # 3. check if game over
         reward = 0
         # If snake collides or it doesnt do anything for too long, end game
-        if self.is_collision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
+        if self.isCollision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
             currSnake.setGameOver(True)
             reward = -10
             return reward, currSnake.getGameOver(), currSnake.getScore()
@@ -186,20 +187,20 @@ class SnakeGameAI:
         if currSnake.getHead() == currSnake.getFood():
             currSnake.setScore(currSnake.getScore() + 1)
             reward += 10
-            self._place_food(i)
+            self._placeFood(i)
         else:
             currSnake.setSnake(currSnake.getSnake().pop())
         
         # 5. update ui and clock
         # TODO make this work for each idx 
         # This will be called by agent outside of this program to make sure all snakes took a step
-        # self._update_ui()
+        # self._updateUi()
         # self.clock.tick(SPEED)
 
         # 6. return game over and score
         return reward, currSnake.getGameOver(), currSnake.getScore()
     
-    def is_collision(self, i, point=None):
+    def isCollision(self, i, point=None):
         currSnake = self.snakes[i]
         # If there's no given point to check collision for, use the head
         if point == None:
@@ -214,7 +215,7 @@ class SnakeGameAI:
         return False
     
     # TODO make this work for each idx
-    def _update_ui(self):
+    def _updateUi(self):
         self.display.fill(BLACK)
         
         for snake in self.snakes:
@@ -240,13 +241,13 @@ class SnakeGameAI:
             newDir = clockwise[idx]
         # 0, 1, 0 make a right turn, clockwise turn
         elif np.array_equal(action, [0, 1, 0]):
-            next_idx = (idx + 1) % 4
-            newDir = clockwise[next_idx]
+            nextIdx = (idx + 1) % 4
+            newDir = clockwise[nextIdx]
         # 0, 0, 1 make a left turn, counter clockwise turn
         # np.array_equal(action, [0, 0, 1])
         else:
-            next_idx = (idx - 1) % 4
-            newDir = clockwise[next_idx]
+            nextIdx = (idx - 1) % 4
+            newDir = clockwise[nextIdx]
         
         currSnake.setDirection(newDir)
         currHead = currSnake.getHead()
