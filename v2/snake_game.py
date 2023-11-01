@@ -115,6 +115,15 @@ class SnakeGameAI:
         self.clock = pygame.time.Clock()
         # self.reset()
         
+    def getHead(self, i):
+        return self.snakes[i].getHead()
+
+    def getFood(self, i):
+        return self.snakes[i].getFood()
+    
+    def getDirection(self, i):
+        return self.snakes[i].getDirection()
+
     # init game state
     def reset(self, models):
         if len(models) != self.n_snakes:
