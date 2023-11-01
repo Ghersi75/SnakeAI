@@ -32,26 +32,76 @@ SPEED = 150
 WIDTH = 640
 HEIGHT = 480
 
+class Snake:
+    def __init__(self, direction, head, snake, score, food, gameOver, model):
+        self.direction = direction
+        self.head = head
+        self.snake = snake
+        self.score = score
+        self.food = food
+        self.gameOver = gameOver
+        self.model = model
+    
+    def getDirection(self):
+        return self.direction
+
+    def setDirection(self, newDir):
+        self.direction = newDir
+
+    def getHead(self):
+        return self.head
+
+    def setHead(self, newHead):
+        self.head = newHead
+
+    def getSnake(self):
+        return self.snake
+
+    def setSnake(self, newSnake):
+        self.snake = newSnake
+
+    def getScore(self):
+        return self.score
+
+    def setScore(self, newScore):
+        self.setScore = newScore
+
+    def getFood(self):
+        return self.food
+
+    def setFood(self, newFood):
+        self.setFood = newFood
+    
+    def getGameOver(self):
+        return self.gameOver
+
+    def setGameOver(self, newGameOver):
+        self.game_over = newGameOver
+
+    def getModel(self):
+        return self.model
+
+    def setModel(self, newModel):
+        self.model = newModel
+
 class SnakeGameAI:
     def __init__(self, w=WIDTH, h=HEIGHT, n_snakes=1):
         self.w = w
         self.h = h
-        # Add option to have multiple snakes, and initialize each one to be a list of None elements for each snake
-        # These value should all be set once the reset() function is called
         self.n_snakes = n_snakes
-        # All snakes start facing right
-        self.directions = [Direction.RIGHT] * n_snakes
-        self.heads = [None] * n_snakes
-        self.snakes = [None] * n_snakes
-        # All snakes start with 0 score
-        self.scores = [0] * n_snakes
-        # All snakes start with no food set
-        self.foods = [None] * n_snakes
+        self.snakes = []
+        for i in range(n_snakes):
+            new_snake = Snake(Direction.RIGHT,  # Direction
+                              None,             # Head
+                              None,             # Full snake, body and head
+                              0,                # Score
+                              None,             # Food
+                              False,            # Game over, false by default
+                              None)             # Neural network model, none by default
         # All snakes start with 0 iterations played
         self.frame_iterations = [0] * n_snakes
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
-        self.game_overs = [False] * n_snakes
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
         # self.reset()
