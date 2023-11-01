@@ -84,28 +84,20 @@ class Agent:
 
         return np.array(state, dtype=int)
 
-    # TODO look at this one
-    # No need for an idx input since this will get a move for each snake regardless of which one it is
-    # As generations move along, this should get the best move based on the previous best generation
+    # No need for guessing or idx input
+    # Evolution essentially just guesses over and over until it gets good at it, so no need to hardcode guessing
     def get_action(self, state):
-        # random moves: tradeoff exploration vs exploitation
-        # essentially, start as random, and move to predicted moves as the model improves
-        self.epsilon = 50 - self.n_games
         next_move = [0, 0, 0]
-        # As more games happen, epsilon decreases, and less random moves are done
-        if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 2)
-            next_move[move] = 1
-        else:
-            state0 = torch.tensor(state, dtype=torch.float)
-            # This will automatically call the forward function
-            prediction = self.model(state0)
-            # argmax will return the index of the highest number
-            # [0, 1, 0] will return 1
-            # [1, 0, 0] will return 0
-            # [99, 98, 100] will return 2
-            move = torch.argmax(prediction).item()
-            next_move[move] = 1
+
+        state0 = torch.tensor(state, dtype=torch.float)
+        # This will automatically call the forward function
+        prediction = self.model(state0)
+        # argmax will return the index of the highest number
+        # [0, 1, 0] will return 1
+        # [1, 0, 0] will return 0
+        # [99, 98, 100] will return 2
+        move = torch.argmax(prediction).item()
+        next_move[move] = 1
 
         return next_move
 
