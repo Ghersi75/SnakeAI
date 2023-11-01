@@ -109,20 +109,20 @@ class SnakeGame:
         
         # Get 9x9 with the head at its center
         # c = 0
-        # for i in range(-4, 5):
-        #     for j in range(-4, 5):
-        #         rect_x = max(self.head.x + i * BLOCK_SIZE, 0)
-        #         rect_y = max(self.head.y + j * BLOCK_SIZE, 0)
-        #         pygame.draw.rect(self.display, GREY, pygame.Rect(rect_x, rect_y, BLOCK_SIZE, BLOCK_SIZE))
+        for i in range(-4, 5):
+            for j in range(-4, 5):
+                rect_x = max(self.head.x + i * BLOCK_SIZE, 0)
+                rect_y = max(self.head.y + j * BLOCK_SIZE, 0)
+                pygame.draw.rect(self.display, GREY, pygame.Rect(rect_x, rect_y, BLOCK_SIZE, BLOCK_SIZE))
 
-        #         # text_surface = font.render(str(c), True, WHITE)
-        #         # text_rect = text_surface.get_rect(center=(rect_x + BLOCK_SIZE // 2, rect_y + BLOCK_SIZE // 2))
+                # text_surface = font.render(str(c), True, WHITE)
+                # text_rect = text_surface.get_rect(center=(rect_x + BLOCK_SIZE // 2, rect_y + BLOCK_SIZE // 2))
 
-        #         # # Draw the text onto the rectangle
-        #         # self.display.blit(text_surface, text_rect)
-        #         c += 1
+                # # Draw the text onto the rectangle
+                # self.display.blit(text_surface, text_rect)
+                # c += 1
 
-        print(f"C: {c}")
+        # print(f"C: {c}")
         for pt in self.snake:
             pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
             pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
