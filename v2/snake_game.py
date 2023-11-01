@@ -105,8 +105,6 @@ class SnakeGameAI:
                               None,             # Food
                               False,            # Game over, false by default
                               None)             # Neural network model, none by default
-        # All snakes start with 0 iterations played
-        self.frame_iterations = [0] * n_snakes
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
@@ -120,33 +118,38 @@ class SnakeGameAI:
             raise Exception("Number of models given does not match number of snakes")
         
         for i in range(self.n_snakes):
-            # Not sure if doing something like snake = self.snakes[i] would be reference or a copy so I'll play it safe
-            self.snakes[i].setDirection(Direction.RIGHT)
+            # Not sure if doing something like snake = self.snakes[i] would be reference, but it should be since its a class reference
+            currSnake = self.snakes[i]
+            currSnake.setDirection(Direction.RIGHT)
             
-            self.snakes[i].setHead(Point(self.w/2, self.h/2))
-            self.snakes[i].setSnake([self.snakes[i].getHead(), 
-                                    Point(self.heads[i].x-BLOCK_SIZE, self.heads[i].y),
-                                    Point(self.heads[i].x-(2*BLOCK_SIZE), self.heads[i].y)])
-            self.snakes[i].setScore(0)
-            self.snakes[i].setFood(None)
+            currSnake.setHead(Point(self.w/2, self.h/2))
+            # This should also be fine
+            currHead = currSnake.getHead()
+            currSnake.setSnake([currHead, 
+                                Point(currHead.x-BLOCK_SIZE, currHead.y),
+                                Point(currHead.x-(2*BLOCK_SIZE), currHead.y)])
+            currSnake.setScore(0)
+            currSnake.setFood(None)
             self._place_food(i)
-            self.snakes[i].setModel(models[i])
-            self.snakes[i].setGameOver(False)
-            self.snakes[i].setFrameIterations(0)
+            currSnake.setModel(models[i])
+            currSnake.setGameOver(False)
+            currSnake.setFrameIterations(0)
         
     def _place_food(self, i):
+        currSnake = self.snakes[i]
         x = random.randint(0, (self.w-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
         y = random.randint(0, (self.h-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         food = Point(x, y)
-        if food in self.snakes[i].getSnake():
+        if food in currSnake.getSnake():
             self._place_food(i)
         else:
-            self.snakes[i].setFood(Point(x, y))
+            currSnake.setFood(food)
 
-        
+    # TODO fix
     # This function simply makes the next step with action as the direction it should be going in, and it returns the reward, whether the game is over, and the score
     def play_step(self, action, i):
-        self.frame_iterations[i] += 1
+        currSnake = self.snakes[i]
+        currSnake.setFrameIterations(currSnake.getFrameIterations() + 1)
         # 1. collect user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -181,6 +184,7 @@ class SnakeGameAI:
         # 6. return game over and score
         return reward, self.game_overs[i], self.scores[i]
     
+    # TODO fix
     def is_collision(self, i, point=None):
         # If there's no given point to check collision for, use the head
         if point == None:
@@ -210,6 +214,7 @@ class SnakeGameAI:
         self.display.blit(text, [0, 0])
         pygame.display.flip()
         
+    # TODO fix
     def _move(self, action, i):
         # straight, right, left
         # print(action)
@@ -241,6 +246,6 @@ class SnakeGameAI:
             y -= BLOCK_SIZE
             
         self.heads[i] = Point(x, y)
-
+    
     def test(self):
         self.reset()
