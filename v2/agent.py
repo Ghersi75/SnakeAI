@@ -13,15 +13,18 @@ class Agent:
     def __init__(self, n_snakes=1):
         self.n_games = 0
         self.n_snakes = n_snakes
+        self.game = SnakeGameAI()
 
-    def get_state(self, game, i):
+    def get_state(self, i):
+        game = self.game
+        head = game.getHead(i)
         # Get 9x9 grid around snake for model inputs
         snake_vision_arr = []
         for i in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
             for j in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
                 # If either of these is negative, is_collision will return true
-                check_x = game.heads[i].x + BLOCK_SIZE * i
-                check_y = game.heads[i].x + BLOCK_SIZE * j
+                check_x = head.x + BLOCK_SIZE * i
+                check_y = head.x + BLOCK_SIZE * j
                 check_point = Point(check_x, check_y)
                 if game.is_collision(i, check_point):
                     # If the given point would cause a collision, meaning the wall or snake, append -1
@@ -33,7 +36,6 @@ class Agent:
                     # If its not going to cause a collision or be food, append 0
                     snake_vision_arr.append(0)
 
-        head = game.heads[i]
         food = game.foods[i]
         direction = game.directions[i]
         # Get 4 points around the head
