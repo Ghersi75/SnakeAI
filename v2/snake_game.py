@@ -51,6 +51,7 @@ class SnakeGameAI:
         self.frame_iterations = [0] * n_snakes
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
+        self.game_overs = [False] * n_snakes
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
         # self.reset()
@@ -93,12 +94,11 @@ class SnakeGameAI:
         
         # 3. check if game over
         reward = 0
-        game_over = False
         # If snake collides or it doesnt do anything for too long, end game
         if self.is_collision(i) or self.frame_iterations[i] > 100 * len(self.snakes[i]):
-            game_over = True
+            self.game_overs[i] = True
             reward = -10
-            return reward, game_over, self.scores[i]
+            return reward, self.game_overs[i], self.scores[i]
             
         # 4. place new food or just move
         if self.heads[i] == self.foods[i]:
@@ -114,7 +114,7 @@ class SnakeGameAI:
         self.clock.tick(SPEED)
 
         # 6. return game over and score
-        return reward, game_over, self.scores[i]
+        return reward, self.game_overs[i], self.scores[i]
     
     def is_collision(self, i, point=None):
         # If there's no given point to check collision for, use the head
