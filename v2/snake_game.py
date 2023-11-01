@@ -29,6 +29,10 @@ BLACK = (0,0,0)
 BLOCK_SIZE = 20
 SPEED = 150
 
+# Number of frames it takes for the game to end if the snake doesnt do anything
+# formula is multiplier * length of snake
+AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER = 100
+
 WIDTH = 640
 HEIGHT = 480
 
@@ -145,7 +149,6 @@ class SnakeGameAI:
         else:
             currSnake.setFood(food)
 
-    # TODO fix
     # This function simply makes the next step with action as the direction it should be going in, and it returns the reward, whether the game is over, and the score
     def play_step(self, action, i):
         currSnake = self.snakes[i]
@@ -158,31 +161,34 @@ class SnakeGameAI:
         
         # 2. move
         self._move(action, i) # update the head
-        self.snakes[i].insert(0, self.heads[i])
+        # Insert the head at index 0
+        # Removing the last element if no food was picked up is handled next
+        currSnake.setSnake(currSnake.getSnake().insert(0, currSnake.getHead()))
         
         # 3. check if game over
         reward = 0
         # If snake collides or it doesnt do anything for too long, end game
-        if self.is_collision(i) or self.frame_iterations[i] > 100 * len(self.snakes[i]):
-            self.game_overs[i] = True
+        if self.is_collision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
+            currSnake.setGameOver(True)
             reward = -10
-            return reward, self.game_overs[i], self.scores[i]
+            return reward, currSnake.getGameOver(), currSnake.getScore()
             
         # 4. place new food or just move
-        if self.heads[i] == self.foods[i]:
-            self.scores[i] += 1
+        if currSnake.getHead() == currSnake.getFood():
+            currSnake.setScore(currSnake.getScore() + 1)
             reward += 10
             self._place_food(i)
         else:
-            self.snakes[i].pop()
+            currSnake.setSnake(currSnake.getSnake().pop())
         
         # 5. update ui and clock
-        # TODO make this work for each idx
-        self._update_ui()
-        self.clock.tick(SPEED)
+        # TODO make this work for each idx 
+        # This will be called by agent outside of this program to make sure all snakes took a step
+        # self._update_ui()
+        # self.clock.tick(SPEED)
 
         # 6. return game over and score
-        return reward, self.game_overs[i], self.scores[i]
+        return reward, currSnake.getGameOver(), currSnake.getScore()
     
     # TODO fix
     def is_collision(self, i, point=None):
@@ -213,39 +219,37 @@ class SnakeGameAI:
         text = font.render("Scores: " + str(self.scores), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
-        
-    # TODO fix
+
     def _move(self, action, i):
+        currSnake = self.snakes[i]
         # straight, right, left
         # print(action)
         clockwise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
-        idx = clockwise.index(self.direction)
+        idx = clockwise.index(currSnake.getDirection())
         # 1, 0, 0 go straight, no direction change
         if np.array_equal(action, [1, 0, 0]):
-            new_dir = clockwise[idx]
+            newDir = clockwise[idx]
         # 0, 1, 0 make a right turn, clockwise turn
         elif np.array_equal(action, [0, 1, 0]):
             next_idx = (idx + 1) % 4
-            new_dir = clockwise[next_idx]
+            newDir = clockwise[next_idx]
         # 0, 0, 1 make a left turn, counter clockwise turn
         # np.array_equal(action, [0, 0, 1])
         else:
             next_idx = (idx - 1) % 4
-            new_dir = clockwise[next_idx]
+            newDir = clockwise[next_idx]
         
-        self.directions[i] = new_dir
-        x = self.heads[i].x
-        y = self.heads[i].y
-        if new_dir == Direction.RIGHT:
+        currSnake.setDirection(newDir)
+        currHead = currSnake.getHead()
+        x = currHead.x
+        y = currHead.y
+        if newDir == Direction.RIGHT:
             x += BLOCK_SIZE
-        elif new_dir == Direction.LEFT:
+        elif newDir == Direction.LEFT:
             x -= BLOCK_SIZE
-        elif new_dir == Direction.DOWN:
+        elif newDir == Direction.DOWN:
             y += BLOCK_SIZE
-        elif new_dir == Direction.UP:
+        elif newDir == Direction.UP:
             y -= BLOCK_SIZE
             
-        self.heads[i] = Point(x, y)
-    
-    def test(self):
-        self.reset()
+        currSnake.setHead(Point(x, y))
