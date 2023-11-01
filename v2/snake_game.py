@@ -56,19 +56,20 @@ class SnakeGameAI:
         # self.reset()
         
     # init game state
+    # Should reset all values regardless of whether or not init values are the same
     def reset(self):
         for i in range(self.n_snakes):
-            # self.directions[i] = Direction.RIGHT
+            self.directions[i] = Direction.RIGHT
             
             self.heads[i] = Point(self.w/2, self.h/2)
             self.snakes[i] = [self.heads[i], 
                         Point(self.heads[i].x-BLOCK_SIZE, self.heads[i].y),
                         Point(self.heads[i].x-(2*BLOCK_SIZE), self.heads[i].y)]
             
-            # self.scores[i] = 0
-            # self.foods[i] = None
+            self.scores[i] = 0
+            self.foods[i] = None
             self._place_food(i)
-            # self.frame_iterations[i] = 0
+            self.frame_iterations[i] = 0
         
     def _place_food(self, i):
         x = random.randint(0, (self.w-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
