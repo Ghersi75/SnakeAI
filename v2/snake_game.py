@@ -190,16 +190,16 @@ class SnakeGameAI:
         # 6. return game over and score
         return reward, currSnake.getGameOver(), currSnake.getScore()
     
-    # TODO fix
     def is_collision(self, i, point=None):
+        currSnake = self.snakes[i]
         # If there's no given point to check collision for, use the head
         if point == None:
-            point = self.heads[i]
+            point = currSnake.getHead()
         # hits boundary
         if point.x > self.w - BLOCK_SIZE or point.x < 0 or point.y > self.h - BLOCK_SIZE or point.y < 0:
             return True
         # hits itself
-        if point in self.snakes[i][1:]:
+        if point in currSnake.getSnake()[1:]:
             return True
         
         return False
