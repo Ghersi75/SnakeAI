@@ -137,9 +137,12 @@ class SnakeGameAI:
     def _place_food(self, i):
         x = random.randint(0, (self.w-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
         y = random.randint(0, (self.h-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        self.foods[i] = Point(x, y)
-        if self.foods[i] in self.snakes[i]:
+        food = Point(x, y)
+        if food in self.snakes[i].getSnake():
             self._place_food(i)
+        else:
+            self.snakes[i].setFood(Point(x, y))
+
         
     # This function simply makes the next step with action as the direction it should be going in, and it returns the reward, whether the game is over, and the score
     def play_step(self, action, i):
