@@ -7,33 +7,15 @@ from model import Linear_QNet, QTrainer
 from helper import plot, model_folder_path, SNAKE_VISION_RADIUS
 import os
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-# Learning rate
-LR = 1e-3
-
 # Agent class used to manage the game and AI
 class Agent:
     # TODO look at this one
     def __init__(self, n_snakes=1):
         self.n_games = 0
         self.n_snakes = n_snakes
-        if os.path.exists(os.path.join(model_folder_path, "model.pth")):
-            model_state = torch.load(os.path.join(model_folder_path, "model.pth"))
-            self.n_games = model_state['n_games']
-        # Randomness
-        self.epsilon = 0 
-        # Discount rate used for the magic Q function
-        self.gamma = .9 # Must be smaller than 1
-        # Removes elements from the left if it fills up
-        self.memory = deque(maxlen=MAX_MEMORY)
-        # 11 inputs
-        # 256 hidden neurons
-        # 3 Outputs, straight, left, right
-        self.model = Linear_QNet(11, 256, 3)
-        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma) 
 
     def get_state(self, game, i):
+        # Get 9x9 grid around snake for model inputs
         snake_vision_arr = []
         for i in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
             for j in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
@@ -100,31 +82,10 @@ class Agent:
 
         return np.array(state, dtype=int)
 
-    # TODO look at this one - should be good
-    # Store current state, not sure why it was named remember instead of something better
-    def remember(self, state, action, reward, next_state, game_over):
-        self.memory.append((state, action, reward, next_state, game_over))
-
     # TODO look at this one
-    # This will train multiple games over time
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            # This will return BATCH_SIZE amount of tuples 
-            mini_sample = random.sample(self.memory, BATCH_SIZE)
-        else:
-            mini_sample = self.memory
-
-        states, actions, rewards, next_states, game_overs = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, game_overs)
-
-
-    # TODO look at this one
-    # This function will train 1 step at a time
-    def train_short_memory(self, state, action, reward, next_state, game_over):
-        self.trainer.train_step(state, action, reward, next_state, game_over)
-
-    # TODO look at this one
-    def get_action(self, state, i):
+    # No need for an idx input since this will get a move for each snake regardless of which one it is
+    # As generations move along, this should get the best move based on the previous best generation
+    def get_action(self, state):
         # random moves: tradeoff exploration vs exploitation
         # essentially, start as random, and move to predicted moves as the model improves
         self.epsilon = 50 - self.n_games
@@ -137,6 +98,10 @@ class Agent:
             state0 = torch.tensor(state, dtype=torch.float)
             # This will automatically call the forward function
             prediction = self.model(state0)
+            # argmax will return the index of the highest number
+            # [0, 1, 0] will return 1
+            # [1, 0, 0] will return 0
+            # [99, 98, 100] will return 2
             move = torch.argmax(prediction).item()
             next_move[move] = 1
 
@@ -150,44 +115,43 @@ def train(agent):
     record = 0
     game = SnakeGameAI()
     while True:
-        # Get old/curr state
-        state_old = agent.get_state(game)
+        for i in range(agent.n_games):
+            # Get old/curr state
+            state_old = agent.get_state(game, i)
 
-        # Get next move
-        next_move = agent.get_action(state_old)
+            # Get next move
+            next_move = agent.get_action(state_old)
 
-        # Perform move and get new state
-        reward, game_over, score = game.play_step(next_move)
-        state_new = agent.get_state(game)
+            # Perform move and get new state
+            reward, game_over, score = game.play_step(next_move, i)
+            state_new = agent.get_state(game, i)
 
-        # Train short memory
-        agent.train_short_memory(state_old, next_move, reward, state_new, game_over)
+            # Train short memory
+            agent.train_short_memory(state_old, next_move, reward, state_new, game_over)
 
-        # Remember
-        agent.remember(state_old, next_move, reward, state_new, game_over)
+            # Store current state in deque
+            agent.remember(state_old, next_move, reward, state_new, game_over)
 
-        if game_over:
-            # Train long memory / Replay training and plot the results
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory()
+            if game_over:
+                # Train long memory / Replay training and plot the results
+                # game.reset()
+                # agent.n_games += 1
+                # agent.train_long_memory()
 
-            # If score > record, record = score
-            if score > record:
-                record = score
-                agent.model.save(agent.n_games)
+                # If score > record, record = score
+                if score > record:
+                    record = score
+                    agent.model.save(agent.n_games)
 
-            print(f"Game: {agent.n_games}, Score: {score}, Record: {record}")
-
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+        print(f"Game: {agent.n_games}, Score: {score}, Record: {record}")
+        # TODO fix these values to take only best result and set after all games are over
+        plot_scores.append(score)
+        total_score += score
+        mean_score = total_score / agent.n_games
+        plot_mean_scores.append(mean_score)
+        plot(plot_scores, plot_mean_scores)
 
 if __name__ == "__main__":
-    threads = 5
     agent = Agent()
-    # ShareResources()
 
     train(agent)
