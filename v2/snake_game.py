@@ -41,6 +41,7 @@ class Snake:
         self.food = food
         self.gameOver = gameOver
         self.model = model
+        self.frameIterations = 0
     
     def getDirection(self):
         return self.direction
@@ -84,6 +85,12 @@ class Snake:
     def setModel(self, newModel):
         self.model = newModel
 
+    def getFrameIterations(self):
+        return self.frameIterations
+
+    def setFrameIterations(self, newIterations):
+        self.frameIterations = newIterations
+
 class SnakeGameAI:
     def __init__(self, w=WIDTH, h=HEIGHT, n_snakes=1):
         self.w = w
@@ -107,20 +114,25 @@ class SnakeGameAI:
         # self.reset()
         
     # init game state
-    # Should reset all values regardless of whether or not init values are the same
-    def reset(self):
+    def reset(self, models):
+        if len(models) != self.n_snakes:
+            # Just in case I forget
+            raise Exception("Number of models given does not match number of snakes")
+        
         for i in range(self.n_snakes):
-            self.directions[i] = Direction.RIGHT
+            # Not sure if doing something like snake = self.snakes[i] would be reference or a copy so I'll play it safe
+            self.snakes[i].setDirection(Direction.RIGHT)
             
-            self.heads[i] = Point(self.w/2, self.h/2)
-            self.snakes[i] = [self.heads[i], 
-                        Point(self.heads[i].x-BLOCK_SIZE, self.heads[i].y),
-                        Point(self.heads[i].x-(2*BLOCK_SIZE), self.heads[i].y)]
-            
-            self.scores[i] = 0
-            self.foods[i] = None
+            self.snakes[i].setHead(Point(self.w/2, self.h/2))
+            self.snakes[i].setSnake([self.snakes[i].getHead(), 
+                                    Point(self.heads[i].x-BLOCK_SIZE, self.heads[i].y),
+                                    Point(self.heads[i].x-(2*BLOCK_SIZE), self.heads[i].y)])
+            self.snakes[i].setScore(0)
+            self.snakes[i].setFood(None)
             self._place_food(i)
-            self.frame_iterations[i] = 0
+            self.snakes[i].setModel(models[i])
+            self.snakes[i].setGameOver(False)
+            self.snakes[i].setFrameIterations(0)
         
     def _place_food(self, i):
         x = random.randint(0, (self.w-BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
