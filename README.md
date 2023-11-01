@@ -26,5 +26,51 @@ There's still a lot I don't understand about how these models are created and th
 ### V1
 This is the initial version of the game and AI as done in the initial tutorial found [here](https://www.youtube.com/watch?v=L8ypSXwyBds). The above reflections and possible changes have been taken into consideration for the newer version of this AI. Some initial changes were left in here which may or may not have done anything. One example is `SharedResources` in the `helper.py`. These changes don't make a difference anyway, so ignore them. 
 
+This version of the AI uses Q Learning and only 1 snake.
+
 ### V2
 This is the first version created without following a tutorial, but instead created by making changes that I thought would improve the AI. Some improvements have been discussed above in the V1 [possible improvements](#possible-improvements) section.
+
+This version of the AI uses multiple snakes and an evolution based AI. This approach starts with a set number of snakes, n, which will all initially be randomize. These snakes will all do their thing for each generation, and the best performers, selected based on a couple different factors, will be used as the base models for the next generation. 
+
+## Change Logs
+This will keep track of things changed from version to version
+### V1
+Nothing major was changed from the original tutorial
+
+### V2
+The goal of this version was to allow multiple snakes to play at once as well as increasing the number of inputs to allow for a more advanced AI.
+- Updated the game to handle `n_snakes`
+- Updated the inputs
+  - Initial inputs:
+    ```python
+    Total 11
+    Is there a danger straight ahead - 0 or 1 - bool
+    Is there a danger to the right - 0 or 1 - bool
+    Is there a danger to the left - 0 or 1 - bool
+    Is snake moving left - 0 or 1 - bool
+    Is snake moving right - 0 or 1 - bool
+    Is snake moving up - 0 or 1 - bool
+    Is snake moving down - 0 or 1 - bool
+    Is the food to the left of us - 0 or 1 - bool
+    Is the food to the right of us - 0 or 1 - bool
+    Is the food above us - 0 or 1 - bool
+    Is the food below us - 0 or 1 - bool
+    ```
+  - New inputs:
+    ```
+    Total 92
+    9x9 grid of dangers around the head of the snake - 81 inputs
+    -1 is a danger, aka something that would cause a collision and end the game
+    0 is not a danger, empty space
+    1 is food
+    The center of the grid being the head of the snake, thus giving it a 4 block view around it in all directions. 
+    The grid will have at least 1 decent option for optimization. Since the snake only moves 1 block at a time, theres no need to recompute all tiles at the same time. Let's take a 3x3 grid for example:
+     0  0  1
+    -1 -1  0
+    -1  0  0
+    Assuming the -1 values are value of the snake, we can get rid of the left column since we're moving right, and replace the element the head came from with a -1 since we know that is now a part of the snake following. Then, we simply compute the last column to the right since that is a new column to us. There's some short comings to this if snake elements move from a certain spots and disappear, so this can be left for later when optimization matters.
+    The next 11 inputs being the same as previously
+    ```
+    The goal of increasing the snake's view is to help it not run into itself.
+
