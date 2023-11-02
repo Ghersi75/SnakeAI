@@ -44,6 +44,11 @@ class Snake:
         self.gameOver = gameOver
         self.model = model
         self.frameIterations = 0
+        # Used to keep track of how it died
+        # 0 Lazy, didn't get any more fruit and just died bc of multiplier death
+        # 1 Wall
+        # 2 Hit itself
+        self.death = None
     
     def getDirection(self):
         return self.direction
@@ -92,6 +97,12 @@ class Snake:
 
     def setFrameIterations(self, newIterations):
         self.frameIterations = newIterations
+    
+    def getDeath(self):
+        return self.death
+    
+    def setDeath(self, newDeath):
+        self.death = newDeath
 
 class SnakeGameAI:
     def __init__(self, numSnakes, w=WIDTH, h=HEIGHT):
@@ -174,6 +185,9 @@ class SnakeGameAI:
             currSnake.setGameOver(True)
             currSnake.setSnake([])
             currSnake.setHead(None)
+            if currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
+                # Lazy death
+                currSnake.setDeath(0)
 
         # 4. place new food or just move
         if currSnake.getHead() == currSnake.getFood():
@@ -193,9 +207,13 @@ class SnakeGameAI:
             point = currSnake.getHead()
         # hits boundary
         if point.x > self.w - BLOCK_SIZE or point.x < 0 or point.y > self.h - BLOCK_SIZE or point.y < 0:
+            # Hit the wall
+            currSnake.setDeath(1)
             return True
         # hits itself
         if currSnake.getSnake() is not None and len(currSnake.getSnake()) > 0 and point in currSnake.getSnake()[1:]:
+            # Hit itself
+            currSnake.setDeath(2)
             return True
         
         return False
