@@ -4,6 +4,7 @@ from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 from model import EvolutionNetwork, averageCrossover, mutateModel
 from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
 import time
+from threading import Thread
 
 # Agent class used to manage the game and AI
 class Agent:
@@ -127,20 +128,30 @@ class Agent:
         
         return fitness
 
+    # Multithreaded usage
+    def trainIndividual(self, gameOvers, idx):
+        currSnake = self.game.getSnake(idx)
+        # If current snake's game hasn't ended, get a move and keep playing
+        if not currSnake.getGameOver():
+            currState = self.getState(idx)
+            nextAction = self.getAction(idx, currState)
+            self.game.playStep(nextAction, idx)
+        else:
+            gameOvers[idx] = True
+
     def train(self, generations=1):
         for gen in range(generations):
             start = time.time()
             while True:
                 gameOvers = [False] * self.numSnakes
+                threads = []
                 for i in range(self.numSnakes):
-                    currSnake = self.game.getSnake(i)
-                    # If current snake's game hasn't ended, get a move and keep playing
-                    if not currSnake.getGameOver():
-                        currState = self.getState(i)
-                        nextAction = self.getAction(i, currState)
-                        self.game.playStep(nextAction, i)
-                    else:
-                        gameOvers[i] = True
+                    thread = Thread(target=self.trainIndividual, args=(gameOvers, i))
+                    thread.start()
+                    threads.append(thread)
+
+                for thread in threads:
+                    thread.join()
 
                 self.game.updateUi()
                 if gameOvers.count(True) == self.numSnakes:
