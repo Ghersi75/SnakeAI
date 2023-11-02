@@ -4,7 +4,7 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple
-import os
+from helper import AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
 import numpy as np
 
 pygame.init()
@@ -29,9 +29,7 @@ BLACK = (0,0,0)
 BLOCK_SIZE = 20
 SPEED = 150
 
-# Number of frames it takes for the game to end if the snake doesnt do anything
-# formula is multiplier * length of snake
-AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER = 100
+
 
 WIDTH = 640
 HEIGHT = 480
