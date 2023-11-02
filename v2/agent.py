@@ -111,18 +111,18 @@ class Agent:
         # Score will be based on score, how long it lasted, and how it died
         # The goal is the get the highest score obviously, but also avoid running into itself later down the line, which was an issue with Q Learning approach
         fitness = 0
-        fitness += score * 10 # Biggest factor
+        fitness += score * 100 # Biggest factor
         fitness += (frameIterations / maxIterations) * 50 # Shouldn't be a huge amount, but will matter at the beginning of the game
         if death == 0:
             # We don't like lazy
             # Cancels out fitness from surviving by doing nothing
-            fitness -= 50
+            fitness *= .9
         elif death == 1:
             # We also don't like running into walls, but it's not a huge deal
-            fitness -= 10
+            fitness *= .9
         elif death == 2:
             # We don't want it running into itself, but later in the game it will be harder
-            fitness -= 50
+            fitness *= .9
         
         return fitness
 
@@ -146,33 +146,38 @@ class Agent:
                     break
         
             # TODO Logic for generation evolution
-            fitness = []
-            for i in range(self.numSnakes):
-                currFitness = self.fitnessFunction(i)
-                fitness.append(currFitness)
-            sortedFitness = fitness[:]
-            sortedFitness.sort(reverse=True)
-            # print(fitness)
-            # print(sortedFitness)
-            # print(fitness.index(max(fitness)))
-            parentAIndex = fitness.index(sortedFitness[0])
-            parentBIndex = fitness.index(sortedFitness[0])
+            if self.numSnakes > 1:
+                fitness = []
+                for i in range(self.numSnakes):
+                    currFitness = self.fitnessFunction(i)
+                    fitness.append(currFitness)
+                sortedFitness = fitness[:]
+                sortedFitness.sort(reverse=True)
+                # print(fitness)
+                # print(sortedFitness)
+                # print(fitness.index(max(fitness)))
+                parentAIndex = fitness.index(sortedFitness[0])
+                parentBIndex = fitness.index(sortedFitness[1])
 
-            parentA = self.game.getSnake(parentAIndex).getModel()
-            parentB = self.game.getSnake(parentBIndex).getModel()
+                parentA = self.game.getSnake(parentAIndex).getModel()
+                parentB = self.game.getSnake(parentBIndex).getModel()
 
-            child = averageCrossover(parentA, parentB)
-            models = [child]
-            
-            for i in range(1, self.numSnakes):
-                # We want each model to mutate
-                model = mutateModel(child, mutationRate=1)
-                models.append(model)
-            
+                child = averageCrossover(parentA, parentB)
+                models = [child]
+                # Get the best 10% from previous generation
+                for currBestIdx in range(self.numSnakes // 10):
+                    currBestId = fitness.index(sortedFitness[currBestIdx])
+                    currBestModel = self.game.getSnake(currBestId).getModel()
+                    models.append(currBestModel)
+                l = len(models)
+                # print(l) # numSnakes - 1 - numSnakes // 10
+                for i in range(l, self.numSnakes):
+                    # We want each model to mutate
+                    model = mutateModel(child, mutationRate=1)
+                    models.append(model)
+            else:
+                newModel = mutateModel(self.game.getSnake(0).getModel(), mutationRate=1)
+                models = [newModel]
+            # print(len(models)) # numSnakes
             print(f"Generation {gen + 1} done. Best fitness: {sortedFitness[0]}")
             self.game.reset(models)
-
-if __name__ == "__main__":
-    agent = Agent(100)
-
-    agent.train(50)
