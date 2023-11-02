@@ -1,19 +1,19 @@
 import torch
-import random
 import numpy as np
-from collections import deque
 from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
-from model import Linear_QNet, QTrainer
-from helper import plot, model_folder_path, SNAKE_VISION_RADIUS
-import os
+from model import EvolutionNetwork
+from helper import SNAKE_VISION_RADIUS
 
 # Agent class used to manage the game and AI
 class Agent:
     # TODO look at this one
-    def __init__(self, numSnakes=1):
+    def __init__(self, numSnakes):
         self.nGames = 0
         self.numSnakes = numSnakes
-        self.game = SnakeGameAI()
+        self.game = SnakeGameAI(numSnakes)
+        # Each model should have randomize weights and biases, so each model should be different at the beginning
+        models = [EvolutionNetwork(92, 256, 3) for i in range(numSnakes)]
+        self.game.reset(models=models)
 
     def getState(self, i):
         game = self.game
@@ -21,16 +21,16 @@ class Agent:
         head = currSnake.getHead()
         # Get 9x9 grid around snake for model inputs
         snakeVisionArr = []
-        for i in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
-            for j in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
+        for j in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
+            for k in range(-1 * SNAKE_VISION_RADIUS, SNAKE_VISION_RADIUS + 1):
                 # If either of these is negative, is_collision will return true
-                checkX = head.x + BLOCK_SIZE * i
-                checkY = head.x + BLOCK_SIZE * j
+                checkX = head.x + BLOCK_SIZE * j
+                checkY = head.y + BLOCK_SIZE * k
                 checkPoint = Point(checkX, checkY)
                 if game.isCollision(i, checkPoint):
                     # If the given point would cause a collision, meaning the wall or snake, append -1
                     snakeVisionArr.append(-1)
-                elif game.foods[i] == checkPoint:
+                elif currSnake.getFood() == checkPoint:
                     # If the point given is where the food is append 1
                     snakeVisionArr.append(1)
                 else:
@@ -108,12 +108,15 @@ class Agent:
                 currSnake = self.game.getSnake(i)
                 # If current snake's game hasn't ended, get a move and keep playing
                 if not currSnake.getGameOver():
+                    print("Not done")
                     currState = self.getState(i)
                     nextAction = self.getAction(i, currState)
                     self.game.playStep(nextAction, i)
                 else:
+                    print("Done")
                     gameOvers[i] = True
-            
+
+            self.game.updateUi()
             if gameOvers.count(True) == self.numSnakes:
                 break
         
@@ -121,4 +124,6 @@ class Agent:
         
 
 if __name__ == "__main__":
-    agent = Agent()
+    agent = Agent(2)
+
+    agent.train()

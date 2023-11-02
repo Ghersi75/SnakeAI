@@ -69,13 +69,13 @@ class Snake:
         return self.score
 
     def setScore(self, newScore):
-        self.setScore = newScore
+        self.score = newScore
 
     def getFood(self):
         return self.food
 
     def setFood(self, newFood):
-        self.setFood = newFood
+        self.food = newFood
     
     def getGameOver(self):
         return self.gameOver
@@ -96,7 +96,7 @@ class Snake:
         self.frameIterations = newIterations
 
 class SnakeGameAI:
-    def __init__(self, w=WIDTH, h=HEIGHT, numSnakes=1):
+    def __init__(self, numSnakes, w=WIDTH, h=HEIGHT):
         self.w = w
         self.h = h
         self.numSnakes = numSnakes
@@ -109,7 +109,7 @@ class SnakeGameAI:
                               None,             # Food
                               False,            # Game over, false by default
                               None)             # Neural network model, none by default
-        self.snakes.append(newSnake)
+            self.snakes.append(newSnake)
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
@@ -142,6 +142,8 @@ class SnakeGameAI:
             currSnake.setModel(models[i])
             currSnake.setGameOver(False)
             currSnake.setFrameIterations(0)
+            # Just in case
+            self.snakes[i] = currSnake
         
     def _placeFood(self, i):
         currSnake = self.snakes[i]
@@ -166,13 +168,13 @@ class SnakeGameAI:
         self._move(action, i) # update the head
         # Insert the head at index 0
         # Removing the last element if no food was picked up is handled next
-        currSnake.setSnake(currSnake.getSnake().insert(0, currSnake.getHead()))
-        
+        currSnake.setSnake([currSnake.getHead()] + currSnake.getSnake())
+
         # 3. check if game over
         # If snake collides or it doesnt do anything for too long, end game
-        if self.isCollision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
+        if currSnake.getSnake() != None and self.isCollision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
             currSnake.setGameOver(True)
-            currSnake.setSnake(None)
+            currSnake.setSnake([])
             currSnake.setHead(None)
 
         # 4. place new food or just move
@@ -180,7 +182,11 @@ class SnakeGameAI:
             currSnake.setScore(currSnake.getScore() + 1)
             self._placeFood(i)
         else:
-            currSnake.setSnake(currSnake.getSnake().pop())
+            newSnake = currSnake.getSnake()
+            if newSnake is None or len(newSnake) == 0:
+                return
+            newSnake.pop()
+            currSnake.setSnake(newSnake)
     
     def isCollision(self, i, point=None):
         currSnake = self.snakes[i]
@@ -191,7 +197,7 @@ class SnakeGameAI:
         if point.x > self.w - BLOCK_SIZE or point.x < 0 or point.y > self.h - BLOCK_SIZE or point.y < 0:
             return True
         # hits itself
-        if point in currSnake.getSnake()[1:]:
+        if currSnake.getSnake() is not None and len(currSnake.getSnake()) > 0 and point in currSnake.getSnake()[1:]:
             return True
         
         return False
@@ -211,7 +217,7 @@ class SnakeGameAI:
         scores = []
         for i in range(self.numSnakes):
             scores.append(self.snakes[i].getScore())
-        text = font.render("Scores: " + str(scores)[1:len()], True, WHITE)
+        text = font.render("Scores: " + str(scores), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
         self.clock.tick(SPEED)
@@ -219,7 +225,6 @@ class SnakeGameAI:
     def _move(self, action, i):
         currSnake = self.snakes[i]
         # straight, right, left
-        # print(action)
         clockwise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clockwise.index(currSnake.getDirection())
         # 1, 0, 0 go straight, no direction change
