@@ -22,9 +22,12 @@ Point = namedtuple('Point', 'x, y')
 
 # rgb colors
 WHITE = (255, 255, 255)
-RED = (200,0,0)
+BLUE = (0, 0, 200)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
+GREEN = (0, 200, 0)
+GREEN1 = (0, 255, 0)
+GREEN2 = (100, 255, 0)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
@@ -151,20 +154,46 @@ class SnakeGameAI:
     # This will be called by agent after all snakes made their move
     def updateUi(self):
         self.display.fill(BLACK)
-        
-        for snake in self.snakes:
-            for pt in snake.getSnake():
-                pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-                pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
+        # Only display the first model, aka the child of the previous 2 best
+        firstSnakeAlive = self.snakes[0]
+        # idx = None
+        for idx in range(len(self.snakes)):
+            if not self.snakes[idx].getGameOver():
+                firstSnakeAlive = self.snakes[idx]
+                break
+        # Same index as first one alive from above
+        bestSnakeAlive = self.snakes[idx]
+        for bestIdx in range(len(self.snakes)):
+            currSnake = self.snakes[bestIdx]
+            if currSnake.getScore() > bestSnakeAlive.getScore():
+                if not currSnake.getGameOver():
+                    bestSnakeAlive = currSnake
+        for pt in firstSnakeAlive.getSnake():
+            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
+            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
             
-            food = snake.getFood()
-            pygame.draw.rect(self.display, RED, pygame.Rect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE))
+            food = firstSnakeAlive.getFood()
+            pygame.draw.rect(self.display, BLUE, pygame.Rect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE))
         
+        for pt in bestSnakeAlive.getSnake():
+            pygame.draw.rect(self.display, GREEN1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
+            pygame.draw.rect(self.display, GREEN2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
+            
+            food = bestSnakeAlive.getFood()
+            pygame.draw.rect(self.display, GREEN, pygame.Rect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE))
+        
+
         scores = []
         for i in range(self.numSnakes):
             scores.append(self.snakes[i].getScore())
-        text = font.render("Best Score: " + str(max(scores)), True, WHITE)
-        self.display.blit(text, [0, 0])
+        FirstSnakeAliveText = font.render(f"Snake {idx}'s Score: {firstSnakeAlive.getScore()}", True, WHITE)
+        CurrBestAliveText = font.render(f"Best Alive Score ({self.snakes.index(bestSnakeAlive)}): {bestSnakeAlive.getScore()}", True, WHITE)
+        CurrentGenerationMaxScore = font.render(f"Current Generation Max Score: {max(scores)}", True, WHITE)
+
+        #  - 
+        self.display.blit(FirstSnakeAliveText, [0, 0 * BLOCK_SIZE])
+        self.display.blit(CurrBestAliveText, [0, 1 * BLOCK_SIZE])
+        self.display.blit(CurrentGenerationMaxScore, [0, 2 * BLOCK_SIZE])
         pygame.display.flip()
         self.clock.tick(SPEED)
 
