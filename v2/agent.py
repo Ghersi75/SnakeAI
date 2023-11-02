@@ -3,6 +3,7 @@ import numpy as np
 from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 from model import EvolutionNetwork, averageCrossover, mutateModel
 from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
+import time
 
 # Agent class used to manage the game and AI
 class Agent:
@@ -128,6 +129,7 @@ class Agent:
 
     def train(self, generations=1):
         for gen in range(generations):
+            start = time.time()
             while True:
                 gameOvers = [False] * self.numSnakes
                 for i in range(self.numSnakes):
@@ -179,5 +181,6 @@ class Agent:
                 newModel = mutateModel(self.game.getSnake(0).getModel(), mutationRate=1)
                 models = [newModel]
             # print(len(models)) # numSnakes
-            print(f"Generation {gen + 1} done. Best fitness: {sortedFitness[0]}")
+            end = time.time()
+            print(f"Generation {gen + 1} done. Best fitness: {sortedFitness[0]}. Time taken: {end - start:.2f}s")
             self.game.reset(models)
