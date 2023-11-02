@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
+from SnakeGameNoGUI import SnakeGameNoGUI
 from model import EvolutionNetwork, averageCrossover, mutateModel
 from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
 import time
@@ -12,7 +13,7 @@ class Agent:
     def __init__(self, numSnakes):
         self.nGames = 0
         self.numSnakes = numSnakes
-        self.game = SnakeGameAI(numSnakes)
+        self.game = SnakeGameNoGUI(numSnakes)
         # Each model should have randomize weights and biases, so each model should be different at the beginning
         models = [EvolutionNetwork(92, 256, 3) for i in range(numSnakes)]
         self.game.reset(models=models)
@@ -178,7 +179,8 @@ class Agent:
                     if gameSteps[snakeIdx] is not None:
                         self.game.playStep(gameSteps[snakeIdx], snakeIdx)
 
-                self.game.updateUi()
+                # No need if theres no GUI
+                # self.game.updateUi()
                 if gameOvers.count(True) == self.numSnakes:
                     # print(currSnake.getModel().state_dict())
                     break
