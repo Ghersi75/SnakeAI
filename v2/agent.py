@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
-from model import EvolutionNetwork
-from helper import SNAKE_VISION_RADIUS
+from model import EvolutionNetwork, averageCrossover, mutateModel
+from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
 
 # Agent class used to manage the game and AI
 class Agent:
@@ -101,29 +101,78 @@ class Agent:
 
         return nextMove
     
-    def train(self):
-        while True:
-            gameOvers = [False] * self.numSnakes
-            for i in range(self.numSnakes):
-                currSnake = self.game.getSnake(i)
-                # If current snake's game hasn't ended, get a move and keep playing
-                if not currSnake.getGameOver():
-                    print("Not done")
-                    currState = self.getState(i)
-                    nextAction = self.getAction(i, currState)
-                    self.game.playStep(nextAction, i)
-                else:
-                    print("Done")
-                    gameOvers[i] = True
+    # Finds score of given model index and returns
+    def fitnessFunction(self, i):
+        currSnake = self.game.getSnake(i)
+        score = currSnake.getScore() 
+        frameIterations = currSnake.getFrameIterations()
+        maxIterations = currSnake.getFinalLength() * AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER + 1
+        death = currSnake.getDeath()
+        # Score will be based on score, how long it lasted, and how it died
+        # The goal is the get the highest score obviously, but also avoid running into itself later down the line, which was an issue with Q Learning approach
+        fitness = 0
+        fitness += score * 10 # Biggest factor
+        fitness += (frameIterations / maxIterations) * 50 # Shouldn't be a huge amount, but will matter at the beginning of the game
+        if death == 0:
+            # We don't like lazy
+            # Cancels out fitness from surviving by doing nothing
+            fitness -= 50
+        elif death == 1:
+            # We also don't like running into walls, but it's not a huge deal
+            fitness -= 10
+        elif death == 2:
+            # We don't want it running into itself, but later in the game it will be harder
+            fitness -= 50
+        
+        return fitness
 
-            self.game.updateUi()
-            if gameOvers.count(True) == self.numSnakes:
-                break
+    def train(self, generations=1):
+        for gen in range(generations):
+            while True:
+                gameOvers = [False] * self.numSnakes
+                for i in range(self.numSnakes):
+                    currSnake = self.game.getSnake(i)
+                    # If current snake's game hasn't ended, get a move and keep playing
+                    if not currSnake.getGameOver():
+                        currState = self.getState(i)
+                        nextAction = self.getAction(i, currState)
+                        self.game.playStep(nextAction, i)
+                    else:
+                        gameOvers[i] = True
+
+                self.game.updateUi()
+                if gameOvers.count(True) == self.numSnakes:
+                    # print(currSnake.getModel().state_dict())
+                    break
         
-        # TODO Logic for generation evolution
-        
+            # TODO Logic for generation evolution
+            fitness = []
+            for i in range(self.numSnakes):
+                currFitness = self.fitnessFunction(i)
+                fitness.append(currFitness)
+            sortedFitness = fitness[:]
+            sortedFitness.sort(reverse=True)
+            # print(fitness)
+            # print(sortedFitness)
+            # print(fitness.index(max(fitness)))
+            parentAIndex = fitness.index(sortedFitness[0])
+            parentBIndex = fitness.index(sortedFitness[0])
+
+            parentA = self.game.getSnake(parentAIndex).getModel()
+            parentB = self.game.getSnake(parentBIndex).getModel()
+
+            child = averageCrossover(parentA, parentB)
+            models = [child]
+            
+            for i in range(1, self.numSnakes):
+                # We want each model to mutate
+                model = mutateModel(child, mutationRate=1)
+                models.append(model)
+            
+            print(f"Generation {gen + 1} done. Best fitness: {sortedFitness[0]}")
+            self.game.reset(models)
 
 if __name__ == "__main__":
-    agent = Agent(2)
+    agent = Agent(100)
 
-    agent.train()
+    agent.train(50)
