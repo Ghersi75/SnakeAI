@@ -172,7 +172,9 @@ class SnakeGameAI:
         # If snake collides or it doesnt do anything for too long, end game
         if self.isCollision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
             currSnake.setGameOver(True)
-            
+            currSnake.setSnake(None)
+            currSnake.setHead(None)
+
         # 4. place new food or just move
         if currSnake.getHead() == currSnake.getFood():
             currSnake.setScore(currSnake.getScore() + 1)
