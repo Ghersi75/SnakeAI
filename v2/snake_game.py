@@ -115,16 +115,7 @@ class SnakeGameAI:
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
         # self.reset()
-        
-    def getHead(self, i):
-        return self.snakes[i].getHead()
 
-    def getFood(self, i):
-        return self.snakes[i].getFood()
-    
-    def getDirection(self, i):
-        return self.snakes[i].getDirection()
-    
     def getSnake(self, i):
         return self.snakes[i]
 
@@ -162,7 +153,6 @@ class SnakeGameAI:
         else:
             currSnake.setFood(food)
 
-    # This function simply makes the next step with action as the direction it should be going in, and it returns the reward, whether the game is over, and the score
     def playStep(self, action, i):
         currSnake = self.snakes[i]
         currSnake.setFrameIterations(currSnake.getFrameIterations() + 1)
@@ -179,23 +169,16 @@ class SnakeGameAI:
         currSnake.setSnake(currSnake.getSnake().insert(0, currSnake.getHead()))
         
         # 3. check if game over
-        reward = 0
         # If snake collides or it doesnt do anything for too long, end game
         if self.isCollision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
             currSnake.setGameOver(True)
-            reward = -10
-            return reward, currSnake.getGameOver(), currSnake.getScore()
             
         # 4. place new food or just move
         if currSnake.getHead() == currSnake.getFood():
             currSnake.setScore(currSnake.getScore() + 1)
-            reward += 10
             self._placeFood(i)
         else:
             currSnake.setSnake(currSnake.getSnake().pop())
-
-        # 5. return game over and score
-        return reward, currSnake.getGameOver(), currSnake.getScore()
     
     def isCollision(self, i, point=None):
         currSnake = self.snakes[i]
