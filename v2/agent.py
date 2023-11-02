@@ -4,7 +4,7 @@ from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 from model import EvolutionNetwork, averageCrossover, mutateModel
 from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
 import time
-from threading import Thread
+from threading import Thread, Lock
 
 # Agent class used to manage the game and AI
 class Agent:
@@ -16,6 +16,7 @@ class Agent:
         # Each model should have randomize weights and biases, so each model should be different at the beginning
         models = [EvolutionNetwork(92, 256, 3) for i in range(numSnakes)]
         self.game.reset(models=models)
+        self.playStepLock = Lock()
 
     def getState(self, i):
         game = self.game
@@ -129,13 +130,18 @@ class Agent:
         return fitness
 
     # Multithreaded usage
-    def trainIndividual(self, gameOvers, idx):
+    def trainBatch(self, gameOvers, gameSteps, batchRange):
+        for idx in batchRange:
+            # print(f"Batch: {batchRange}, idx: {idx}")
+            self.trainIndividual(gameOvers, gameSteps, idx)
+
+    def trainIndividual(self, gameOvers, gameSteps, idx):
         currSnake = self.game.getSnake(idx)
         # If current snake's game hasn't ended, get a move and keep playing
         if not currSnake.getGameOver():
             currState = self.getState(idx)
             nextAction = self.getAction(idx, currState)
-            self.game.playStep(nextAction, idx)
+            gameSteps[idx] = nextAction
         else:
             gameOvers[idx] = True
 
@@ -144,14 +150,33 @@ class Agent:
             start = time.time()
             while True:
                 gameOvers = [False] * self.numSnakes
+                gameSteps = [None] * self.numSnakes
+                numThreads = 10
+                batchSize = self.numSnakes // numThreads 
+                batchRanges = []
+                # Start at 0, go to numSnakes, step batchSize at a time
+                for i in range(numThreads):
+                    if i == numThreads - 1:
+                        # Last batch will take on extras since I somehow am struggling to split them up evenly
+                        batchRange = range(i * batchSize, self.numSnakes)
+                    else:
+                        batchRange = range(i * batchSize, i * batchSize + batchSize)
+                    batchRanges.append(batchRange)
+                
+                # print(batchRanges)
+                # return
                 threads = []
-                for i in range(self.numSnakes):
-                    thread = Thread(target=self.trainIndividual, args=(gameOvers, i))
+                for i in range(numThreads):
+                    thread = Thread(target=self.trainBatch, args=(gameOvers, gameSteps, batchRanges[i]))
                     thread.start()
                     threads.append(thread)
 
                 for thread in threads:
                     thread.join()
+
+                for snakeIdx in range(self.numSnakes):
+                    if gameSteps[snakeIdx] is not None:
+                        self.game.playStep(gameSteps[snakeIdx], snakeIdx)
 
                 self.game.updateUi()
                 if gameOvers.count(True) == self.numSnakes:
