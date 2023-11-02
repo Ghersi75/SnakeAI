@@ -30,11 +30,11 @@ GREEN1 = (0, 255, 0)
 GREEN2 = (100, 255, 0)
 BLACK = (0,0,0)
 
-BLOCK_SIZE = 20
+BLOCK_SIZE = 30
 SPEED = 150
 
-WIDTH = 640
-HEIGHT = 480
+WIDTH = 900
+HEIGHT = 900
 
 class SnakeGameAI:
     def __init__(self, numSnakes, w=WIDTH, h=HEIGHT):
