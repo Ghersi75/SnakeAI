@@ -49,6 +49,7 @@ class Snake:
         # 1 Wall
         # 2 Hit itself
         self.death = None
+        self.finalLength = None
     
     def getDirection(self):
         return self.direction
@@ -103,6 +104,12 @@ class Snake:
     
     def setDeath(self, newDeath):
         self.death = newDeath
+    
+    def getFinalLength(self):
+        return self.finalLength
+
+    def setFinalLength(self, newFinalLength):
+        self.finalLength = newFinalLength
 
 class SnakeGameAI:
     def __init__(self, numSnakes, w=WIDTH, h=HEIGHT):
@@ -183,9 +190,10 @@ class SnakeGameAI:
         # If snake collides or it doesnt do anything for too long, end game
         if currSnake.getSnake() != None and self.isCollision(i) or currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
             currSnake.setGameOver(True)
+            currSnake.setFinalLength(len(currSnake.getSnake()))
             currSnake.setSnake([])
             currSnake.setHead(None)
-            if currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * len(currSnake.getSnake()):
+            if currSnake.getFrameIterations() > AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER * currSnake.getFinalLength():
                 # Lazy death
                 currSnake.setDeath(0)
 
@@ -211,7 +219,7 @@ class SnakeGameAI:
             currSnake.setDeath(1)
             return True
         # hits itself
-        if currSnake.getSnake() is not None and len(currSnake.getSnake()) > 0 and point in currSnake.getSnake()[1:]:
+        elif currSnake.getSnake() is not None and len(currSnake.getSnake()) > 0 and point in currSnake.getSnake()[1:]:
             # Hit itself
             currSnake.setDeath(2)
             return True
