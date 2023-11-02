@@ -124,6 +124,9 @@ class SnakeGameAI:
     
     def getDirection(self, i):
         return self.snakes[i].getDirection()
+    
+    def getSnake(self, i):
+        return self.snakes[i]
 
     # init game state
     def reset(self, models):
