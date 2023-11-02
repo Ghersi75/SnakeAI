@@ -241,7 +241,7 @@ class SnakeGameAI:
         scores = []
         for i in range(self.numSnakes):
             scores.append(self.snakes[i].getScore())
-        text = font.render("Scores: " + str(scores), True, WHITE)
+        text = font.render("Best Score: " + str(max(scores)), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
         self.clock.tick(SPEED)
