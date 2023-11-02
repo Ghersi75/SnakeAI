@@ -190,14 +190,8 @@ class SnakeGameAI:
             self._placeFood(i)
         else:
             currSnake.setSnake(currSnake.getSnake().pop())
-        
-        # 5. update ui and clock
-        # TODO make this work for each idx 
-        # This will be called by agent outside of this program to make sure all snakes took a step
-        # self._updateUi()
-        # self.clock.tick(SPEED)
 
-        # 6. return game over and score
+        # 5. return game over and score
         return reward, currSnake.getGameOver(), currSnake.getScore()
     
     def isCollision(self, i, point=None):
@@ -214,21 +208,25 @@ class SnakeGameAI:
         
         return False
     
-    # TODO make this work for each idx
-    def _updateUi(self):
+    # This will be called by agent after all snakes made their move
+    def updateUi(self):
         self.display.fill(BLACK)
         
         for snake in self.snakes:
-            for pt in snake:
+            for pt in snake.getSnake():
                 pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
                 pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
             
-        for food in self.foods:
+            food = snake.getFood()
             pygame.draw.rect(self.display, RED, pygame.Rect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE))
         
-        text = font.render("Scores: " + str(self.scores), True, WHITE)
+        scores = []
+        for i in range(self.numSnakes):
+            scores.append(self.snakes[i].getScore())
+        text = font.render("Scores: " + str(scores)[1:len()], True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
+        self.clock.tick(SPEED)
 
     def _move(self, action, i):
         currSnake = self.snakes[i]
