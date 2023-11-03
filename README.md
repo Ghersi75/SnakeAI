@@ -60,17 +60,10 @@ The goal of this version was to allow multiple snakes to play at once as well as
   - New inputs:
     ```
     Total 92
-    9x9 grid of dangers around the head of the snake - 81 inputs
-    -1 is a danger, aka something that would cause a collision and end the game
-    0 is not a danger, empty space
-    1 is food
-    The center of the grid being the head of the snake, thus giving it a 4 block view around it in all directions. 
-    The grid will have at least 1 decent option for optimization. Since the snake only moves 1 block at a time, theres no need to recompute all tiles at the same time. Let's take a 3x3 grid for example:
-     0  0  1
-    -1 -1  0
-    -1  0  0
-    Assuming the -1 values are value of the snake, we can get rid of the left column since we're moving right, and replace the element the head came from with a -1 since we know that is now a part of the snake following. Then, we simply compute the last column to the right since that is a new column to us. There's some short comings to this if snake elements move from a certain spots and disappear, so this can be left for later when optimization matters.
-    The next 11 inputs being the same as previously
+    9x9 grid around snake's head with values -1 for danger, 0 for no danger, and 1 for food - 81 inputs here
+    11 inputs from previous version
     ```
     The goal of increasing the snake's view is to help it not run into itself.
-
+- More optimized runs, haven't measured this yet
+- Multi threading speedups, so far only basic operations have been done this way, which may not even speed up overall process
+- No GUI version for faster training, save model, use model on GUI version for visualization
