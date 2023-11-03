@@ -32,7 +32,7 @@ def mutateModel(originalModel, mutationRate=0.1, mutationStrength=0.1):
     
     return mutated_model
 
-def averageCrossover(parentA, parentB):
+def averageCrossover(parentA, parentB, mutationRate=0.1):
     child = EvolutionNetwork(92, 256, 3)
     
     # State dict stores all the values of the network
@@ -51,7 +51,7 @@ def averageCrossover(parentA, parentB):
     child.load_state_dict(child_state_dict)
 
     # Add a bit of mutation to the child
-    child = mutateModel(child)
+    child = mutateModel(child, mutationRate=mutationRate)
 
     # Return new child
     return child
