@@ -5,19 +5,36 @@ from SnakeGameNoGUI import SnakeGameNoGUI
 from model import EvolutionNetwork, averageCrossover, mutateModel
 from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
 import time
-from threading import Thread, Lock
+from threading import Thread
+import os
 
 # Agent class used to manage the game and AI
 class Agent:
     # TODO look at this one
-    def __init__(self, numSnakes):
-        self.nGames = 0
+    def __init__(self, numSnakes, modelLoadName=None):
         self.numSnakes = numSnakes
         self.game = SnakeGameNoGUI(numSnakes)
-        # Each model should have randomize weights and biases, so each model should be different at the beginning
-        models = [EvolutionNetwork(92, 256, 3) for i in range(numSnakes)]
+        
+        if modelLoadName and self.loadModel(modelLoadName):
+            savedData = self.loadModel(modelLoadName)
+            self.numGenerations = savedData['numGenerations']
+            self.bestFitnessCurrGeneration = savedData['bestFitnessCurrGeneration']
+            self.bestFitnessEver = savedData['bestFitnessEver']
+            savedModelStateDicts = savedData['modelsStateDicts']
+            print(f"Loaded Model\nNum Generations: {self.numGenerations}\nBest Fitness Ever: {self.bestFitnessEver}\nBest Fitness Last Generation: {self.bestFitnessCurrGeneration}")
+            models = []
+            for modelIdx in range(len(savedModelStateDicts)):
+                currModel = EvolutionNetwork(92, 256, 3)
+                currModel.load_state_dict(savedModelStateDicts[modelIdx])
+                models.append(currModel)
+        else:
+            self.numGenerations = 0
+            self.bestFitnessCurrGeneration = 0
+            self.bestFitnessEver = 0
+            # Each model should have randomize weights and biases, so each model should be different at the beginning
+            models = [EvolutionNetwork(92, 256, 3) for i in range(numSnakes)]
+        
         self.game.reset(models=models)
-        self.playStepLock = Lock()
 
     def getState(self, i):
         game = self.game
@@ -146,6 +163,34 @@ class Agent:
         else:
             gameOvers[idx] = True
 
+    def loadModel(self, modelLoadName):
+        filePath = __file__
+        currentWorkingDirectory = os.path.dirname(os.path.abspath(filePath))
+        loadPath = os.path.join(currentWorkingDirectory, f"model\\{modelLoadName}.pth")
+        if not os.path.exists(loadPath):
+            return None
+        
+        savedData = torch.load(loadPath)
+        return savedData
+
+    def saveModel(self, modelSaveName=None):
+        filePath = __file__
+        currentWorkingDirectory = os.path.dirname(os.path.abspath(filePath))
+        if modelSaveName == None:
+            modelSaveName = f"{self.numSnakes}Model-{self.numGenerations + 1}-{self.bestFitnessEver:.2f}-{self.bestFitnessCurrGeneration:.2f}"
+        savePath = os.path.join(currentWorkingDirectory, f"model\\{modelSaveName}.pth")
+        modelsStateDicts = []
+        for i in range(self.numSnakes):
+            currModelStateDict = self.game.getSnake(i).getModel().state_dict()
+            modelsStateDicts.append(currModelStateDict)
+        saveDict = {
+            'modelsStateDicts': modelsStateDicts,
+            'numGenerations': self.numGenerations,
+            'bestFitnessCurrGeneration': self.bestFitnessCurrGeneration,
+            'bestFitnessEver': self.bestFitnessEver
+        }
+        torch.save(saveDict, savePath)
+
     def train(self, generations=1):
         for gen in range(generations):
             start = time.time()
@@ -193,6 +238,9 @@ class Agent:
                     fitness.append(currFitness)
                 sortedFitness = fitness[:]
                 sortedFitness.sort(reverse=True)
+                self.bestFitnessCurrGeneration = sortedFitness[0]
+                if sortedFitness[0] > self.bestFitnessEver:
+                    self.bestFitnessEver = sortedFitness[0]
                 # print(fitness)
                 # print(sortedFitness)
                 # print(fitness.index(max(fitness)))
@@ -202,7 +250,8 @@ class Agent:
                 parentA = self.game.getSnake(parentAIndex).getModel()
                 parentB = self.game.getSnake(parentBIndex).getModel()
 
-                child = averageCrossover(parentA, parentB)
+                # Don't mutate first child
+                child = averageCrossover(parentA, parentB, mutationRate=0)
                 models = [child]
                 # Get the best 10% from previous generation
                 for currBestIdx in range(self.numSnakes // 10):
@@ -220,5 +269,7 @@ class Agent:
                 models = [newModel]
             # print(len(models)) # numSnakes
             end = time.time()
-            print(f"Generation {gen + 1} done. Best fitness: {sortedFitness[0]}. Time taken: {end - start:.2f}s")
+            print(f"Generation {self.numGenerations + gen + 1} done\n\tBest fitness: {sortedFitness[0]:.2f}\n\tMean fitness: {sum(sortedFitness) / len(sortedFitness):.2f}\n\tMedian fitness: {sortedFitness[len(sortedFitness) // 2]:.2f}\n\tWorst fitness: {sortedFitness[-1]:.2f}\n\tChild of previous gen's fitness: {fitness[0]:.2f}\n\tTime taken: {end - start:.2f}s")
             self.game.reset(models)
+
+        self.numGenerations += generations
