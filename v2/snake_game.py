@@ -4,7 +4,7 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple
-from helper import AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
+from config import *
 from Snake import Snake
 import numpy as np
 
@@ -30,12 +30,6 @@ GREEN1 = (0, 255, 0)
 GREEN2 = (100, 255, 0)
 BLACK = (0,0,0)
 
-BLOCK_SIZE = 30
-SPEED = 150
-
-WIDTH = 900
-HEIGHT = 900
-
 class SnakeGameAI:
     def __init__(self, numSnakes, w=WIDTH, h=HEIGHT):
         self.w = w
@@ -52,7 +46,7 @@ class SnakeGameAI:
                               None)             # Neural network model, none by default
             self.snakes.append(newSnake)
         # init display
-        self.display = pygame.display.set_mode((self.w, self.h))
+        self.display = pygame.display.set_mode((self.w, self.h), pygame.NOFRAME)
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
         # self.reset()
@@ -186,14 +180,14 @@ class SnakeGameAI:
         scores = []
         for i in range(self.numSnakes):
             scores.append(self.snakes[i].getScore())
-        FirstSnakeAliveText = font.render(f"Snake {idx}'s Score: {firstSnakeAlive.getScore()}", True, WHITE)
-        CurrBestAliveText = font.render(f"Best Alive Score ({self.snakes.index(bestSnakeAlive)}): {bestSnakeAlive.getScore()}", True, WHITE)
-        CurrentGenerationMaxScore = font.render(f"Current Generation Max Score: {max(scores)}", True, WHITE)
+        # FirstSnakeAliveText = font.render(f"Snake {idx}'s Score: {firstSnakeAlive.getScore()}", True, WHITE)
+        # CurrBestAliveText = font.render(f"Best Alive Score ({self.snakes.index(bestSnakeAlive)}): {bestSnakeAlive.getScore()}", True, WHITE)
+        # CurrentGenerationMaxScore = font.render(f"Current Generation Max Score: {max(scores)}", True, WHITE)
 
-        #  - 
-        self.display.blit(FirstSnakeAliveText, [0, 0 * BLOCK_SIZE])
-        self.display.blit(CurrBestAliveText, [0, 1 * BLOCK_SIZE])
-        self.display.blit(CurrentGenerationMaxScore, [0, 2 * BLOCK_SIZE])
+        # #  - 
+        # self.display.blit(FirstSnakeAliveText, [0, 0 * BLOCK_SIZE])
+        # self.display.blit(CurrBestAliveText, [0, 1 * BLOCK_SIZE])
+        # self.display.blit(CurrentGenerationMaxScore, [0, 2 * BLOCK_SIZE])
         pygame.display.flip()
         self.clock.tick(SPEED)
 

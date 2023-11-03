@@ -2,7 +2,7 @@
 import random
 from enum import Enum
 from collections import namedtuple
-from helper import AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
+from config import *
 from Snake import Snake
 import numpy as np
 
@@ -13,12 +13,6 @@ class Direction(Enum):
     DOWN = 4
     
 Point = namedtuple('Point', 'x, y')
-
-BLOCK_SIZE = 30
-SPEED = 150
-
-WIDTH = 900
-HEIGHT = 900
 
 class SnakeGameNoGUI:
     def __init__(self, numSnakes, w=WIDTH, h=HEIGHT):

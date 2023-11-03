@@ -3,7 +3,7 @@ import numpy as np
 from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 from SnakeGameNoGUI import SnakeGameNoGUI
 from model import EvolutionNetwork, averageCrossover, mutateModel
-from helper import SNAKE_VISION_RADIUS, AMOUNT_OF_FRAMES_TO_DEATH_MULTIPLIER
+from config import *
 import time
 from threading import Thread
 import os
@@ -13,7 +13,10 @@ class Agent:
     # TODO look at this one
     def __init__(self, numSnakes, modelLoadName=None):
         self.numSnakes = numSnakes
-        self.game = SnakeGameNoGUI(numSnakes)
+        if SHOW_GAME:
+            self.game = SnakeGameAI(numSnakes)
+        else:
+            self.game = SnakeGameNoGUI(numSnakes)
         
         if modelLoadName and self.loadModel(modelLoadName):
             savedData = self.loadModel(modelLoadName)
@@ -225,7 +228,8 @@ class Agent:
                         self.game.playStep(gameSteps[snakeIdx], snakeIdx)
 
                 # No need if theres no GUI
-                # self.game.updateUi()
+                if SHOW_GAME:
+                    self.game.updateUi()
                 if gameOvers.count(True) == self.numSnakes:
                     # print(currSnake.getModel().state_dict())
                     break
