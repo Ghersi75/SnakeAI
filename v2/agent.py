@@ -1,7 +1,7 @@
 import torch
 import numpy as np
-from snake_game import SnakeGameAI, Direction, Point, BLOCK_SIZE
-from SnakeGameNoGUI import SnakeGameNoGUI
+from SnakeGames.SnakeGame import SnakeGameAI, Direction, Point, BLOCK_SIZE
+from SnakeGames.SnakeGameNoGUI import SnakeGameNoGUI
 from model import EvolutionNetwork, averageCrossover, mutateModel
 from config import *
 import time
